@@ -16,8 +16,12 @@ logs_transfer/
 records_case_study/
 records_transfer/
 memory/
-*.sh
+# *.sh
 /*.txt
 *.pyc
 *.pkl
 playground*
+run_logs/
+r1_logs/
+CityFlow/
+
