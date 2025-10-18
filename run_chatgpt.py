@@ -69,9 +69,11 @@ def main(in_args):
     print(in_args.traffic_file)
     process_list = []
 
+    log_dir = "./GPT_logs/" + time.strftime('%m%d_%H%M%S', time.localtime(time.time()))
+
     dic_agent_conf_extra = {
         "GPT_VERSION": in_args.gpt_version,
-        "LOG_DIR": "./GPT_logs",
+        "LOG_DIR": log_dir,
     }
 
     dic_traffic_env_conf_extra = {
@@ -124,8 +126,8 @@ def main(in_args):
         "PATH_TO_DATA": os.path.join("data", template, str(road_net))
     }
 
-    if not os.path.exists("./GPT_logs"):
-        os.makedirs("./GPT_logs")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
 
     if in_args.multi_process:
         process_list.append(Process(target=oneline_wrapper,

@@ -29,14 +29,14 @@ class Intersection:
         self.dic_entering_approach_to_edge = {"W": "road_{0}_{1}_0".format(inter_id[0] - 1, inter_id[1])}
         self.dic_entering_approach_to_edge.update({"E": "road_{0}_{1}_2".format(inter_id[0] + 1, inter_id[1])})
         self.dic_entering_approach_to_edge.update({"N": "road_{0}_{1}_3".format(inter_id[0], inter_id[1] + 1)})
-        self.dic_entering_approach_to_edge.update({"S": "road_{0}_{1}_1".format(inter_id[0], inter_id[1] - 1)})
+        self.dic_entering_approach_to_edge.update({"S": "road_{0}_{1}_1".format(inter_id[0], inter_id[1] - 1)})  # 'S' = 'road_1_0_1'
         self.dic_exiting_approach_to_edge = {
             approach: "road_{0}_{1}_{2}".format(inter_id[0], inter_id[1], self.dic_approach_to_node[approach]) for
-            approach in self.list_approachs}
+            approach in self.list_approachs} # 'S' = 'road_1_1_1'
         self.list_phases = dic_traffic_env_conf["PHASE"]
 
         # generate all lanes
-        self.list_entering_lanes = []
+        self.list_entering_lanes = [] # ['road_1_1_0_0', ...]
         for (approach, lane_number) in zip(self.list_approachs, dic_traffic_env_conf["NUM_LANES"]):
             self.list_entering_lanes += [self.dic_entering_approach_to_edge[approach] + "_" + str(i) for i in
                                          range(lane_number)]

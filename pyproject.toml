@@ -1,0 +1,20 @@
+[project]
+name = "llmtscs"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "accelerate==0.27.2",
+    "datasets==2.16.1",
+    "fire>=0.7.1",
+    "peft==0.7.1",
+    "protobuf==3.20.3",
+    "tensorflow-cpu==2.8.0",
+    "transformers==4.45.0",
+    "trl>=0.11.4",
+    "vllm==0.6.2",
+    "wandb>=0.22.0",
+]
+
+[[tool.uv.index]]
+url = "http://mirrors.aliyun.com/pypi/simple/"
+default = true

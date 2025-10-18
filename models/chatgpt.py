@@ -9,10 +9,10 @@ import io
 import pandas as pd
 import numpy as np
 
-url = "https://api.openai.com/v1/chat/completions"
+url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 headers = {
     "Content-Type": "application/json",
-    "Authorization": "YOUR_KEY_HERE"
+    "Authorization": "sk-5e2e00ef602d41298fbb516cd799a5f2"
 }
 
 four_phase_list = {'ETWT': 0, 'NTST': 1, 'ELWL': 2, 'NLSL': 3}
@@ -250,7 +250,9 @@ class ChatGPTTLCS_Commonsense(object):
                 signal_text = re.findall(signal_answer_pattern, analysis)[-1]
 
             except Exception as e:
-                self.errors.append({"error": str(e), "prompt": prompt})
+                if "response" not in locals():
+                    response = "No response"
+                self.errors.append({"error": str(e), "prompt": prompt, "response": response})
                 dump_json(self.errors, self.error_file)
                 time.sleep(3)
 

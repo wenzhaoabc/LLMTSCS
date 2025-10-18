@@ -198,7 +198,9 @@ class OneLine:
         logger.log(results)
         print(results)
         f_state_action = os.path.join(self.dic_path["PATH_TO_WORK_DIRECTORY"], "state_action.json")
+        exp_results_file = os.path.join(self.dic_path["PATH_TO_WORK_DIRECTORY"], "exp_results.json")
         dump_json(state_action_log, f_state_action)
+        dump_json(results, exp_results_file)
         wandb.finish()
 
         print("Training time: ", time.time()-start_time)

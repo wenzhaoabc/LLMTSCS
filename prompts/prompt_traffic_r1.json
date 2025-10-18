@@ -1,0 +1,4 @@
+{
+    "system_prompt": "You are a helpful traffic control agent.",
+    "TSC Description": "The crossroad connects two roads: north-south and east-west, with the traffic light at their intersection. Each road is divided into two sections (e.g., north and south for the north-south road) and each section has two lanes: a through lane and a left-turn lane. Right-turns are permitted at all times. The available signal phases for control are NTST (North-South Through), NLSL (North-South Left), ETWT (East-West Through), and ELWL (East-West Left)."
+}
