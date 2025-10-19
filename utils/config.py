@@ -9,7 +9,9 @@ from models.advanced_mplight_agent import AdvancedMPLightAgent
 from models.advanced_maxpressure_agent import AdvancedMaxPressureAgent
 from models.simple_dqn_one import SimpleDQNAgentOne
 from models.attendlight_agent import AttendLightAgent
-from models.chatgpt import (ChatGPTTLCS_Wait_Time_Forecast, ChatGPTTLCS_Commonsense)
+from models.chatgpt import (ChatGPTTLCS_Wait_Time_Forecast, ChatGPTTLCS_Commonsense, )
+
+from models.chatgpt_2 import (TrafficR1_Agent, Rule_Agent)
 
 DIC_AGENTS = {
     "Random": RandomAgent,
@@ -29,7 +31,9 @@ DIC_AGENTS = {
     "AdvancedDQN": SimpleDQNAgentOne,
     "Attend": AttendLightAgent,
     "ChatGPTTLCSWaitTimeForecast": ChatGPTTLCS_Wait_Time_Forecast,
-    "ChatGPTTLCSCommonsense": ChatGPTTLCS_Commonsense
+    "ChatGPTTLCSCommonsense": ChatGPTTLCS_Commonsense,
+    "LLMTrafficR1": TrafficR1_Agent,
+    "LLMRule": Rule_Agent
 }
 
 DIC_PATH = {

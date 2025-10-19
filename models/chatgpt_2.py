@@ -554,3 +554,131 @@ You can only choose one of the signals listed above: NTST, NLSL, ETWT, ELWL. You
             )
 
         return state_txt
+
+
+class Rule_Agent:
+    def __init__(
+        self, GPT_version, intersection, inter_name, phase_num, log_dir, dataset
+    ):
+        # init road length
+        roads = copy.deepcopy(intersection["roads"])
+        self.inter_name = inter_name
+        self.roads = roads
+        self.length_dict = {"North": 0.0, "South": 0.0, "East": 0.0, "West": 0.0}
+        for r in roads:
+            self.length_dict[roads[r]["location"]] = int(roads[r]["length"])
+
+        self.phases = four_phase_list if phase_num == 4 else eight_phase_list
+
+        self.gpt_version = GPT_version
+        self.last_action = "ETWT"
+
+        self.state_action_prompt_file = f"{log_dir}/{dataset}-{self.inter_name}-rulebased-{phase_num}_state_action.json"
+        self.error_file = (
+            f"{log_dir}/{dataset}-{self.inter_name}-rulebased-{phase_num}_error.json"
+        )
+        self.state_action_prompt = []
+        self.errors = []
+
+    def choose_action(self, env: CityFlowEnv):
+        state, state_incoming, avg_speed = get_state_detail(roads=self.roads, env=env)
+
+        # 默认流量为0时使用ETWT
+        flow_num = 0
+        for road in state:
+            flow_num += state[road]["queue_len"] + sum(state[road]["cells"])
+        if flow_num == 0:
+            action_code = self.action2code("ETWT")
+            self.state_action_prompt.append(
+                {"state": state, "action_reason": "Zero flow", "action": "ETWT"}
+            )
+            dump_json(self.state_action_prompt, self.state_action_prompt_file)
+            return action_code
+
+        # 计算各个相位的车流量
+        phase_flow = {phase: 0 for phase in self.phases}
+        for phase in phase_flow:
+            phase_flow[phase] = (
+                state[phase[:2]]["cells"][0] + state[phase[2:]]["cells"][0]
+            )
+
+        # 判断是否选择最大流量相位
+        max_flow_phase = max(phase_flow, key=phase_flow.get)
+        is_max_flow_phase = True
+        for phase in phase_flow:
+            if (
+                phase != max_flow_phase
+                and phase_flow[max_flow_phase] > phase_flow[phase] * 2.5
+            ):
+                is_max_flow_phase = False
+                break
+        if is_max_flow_phase:
+            action_code = self.action2code(max_flow_phase)
+            self.state_action_prompt.append(
+                {
+                    "state": state,
+                    "action_reason": "Max flow phase",
+                    "action": max_flow_phase,
+                }
+            )
+            dump_json(self.state_action_prompt, self.state_action_prompt_file)
+            return action_code
+
+        # 判断是否选择最大排队长度相位
+        phase_queue = {phase: 0.0 for phase in self.phases}
+        phase_waiting_time = {phase: 0.0 for phase in self.phases}
+        for phase in phase_queue:
+            phase_queue[phase] = (
+                state[phase[:2]]["queue_len"] + state[phase[2:]]["queue_len"]
+            )
+            phase_waiting_time[phase] = (
+                state[phase[:2]]["avg_wait_time"] + state[phase[2:]]["avg_wait_time"]
+            )
+
+        sorted_queue_phase = sorted(
+            phase_queue, key=lambda x: phase_queue[x], reverse=True
+        )
+        max_queue_phases = [
+            f
+            for f in phase_queue
+            if phase_queue[f] == phase_queue[sorted_queue_phase[0]]
+        ]
+        if len(max_queue_phases) == 1:
+            action_code = self.action2code(max_queue_phases[0])
+            self.state_action_prompt.append(
+                {
+                    "state": state,
+                    "action_reason": "Max queue phase",
+                    "action": max_queue_phases[0],
+                }
+            )
+            dump_json(self.state_action_prompt, self.state_action_prompt_file)
+            return action_code
+
+        # 选择等待时间最长的相位
+        sorted_waiting_time_phase = sorted(
+            phase_waiting_time,
+            key=lambda x: phase_waiting_time[x],
+            reverse=True,
+        )
+        max_waiting_time_phases = [
+            f
+            for f in phase_waiting_time
+            if phase_waiting_time[f] == phase_waiting_time[sorted_waiting_time_phase[0]]
+        ]
+        # 默认选择第一个相位
+        action_code = self.action2code(max_waiting_time_phases[0])
+        self.state_action_prompt.append(
+            {
+                "state": state,
+                "action_reason": "Max waiting time phase",
+                "action": max_waiting_time_phases[0],
+            }
+        )
+        dump_json(self.state_action_prompt, self.state_action_prompt_file)
+        return action_code
+
+    def action2code(self, action: str) -> int:
+        code = self.phases[action]
+
+        return code
