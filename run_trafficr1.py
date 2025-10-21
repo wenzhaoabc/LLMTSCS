@@ -16,6 +16,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--proj_name", type=str, default="TSCS-R1")
     parser.add_argument("--eightphase", action="store_true", default=False)
+    # agent type, DIC_AGENTS keys in config.py
+    parser.add_argument("--agent", type=str, default="LLMRule")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--gpt_version", type=str, default="gpt-4")
     parser.add_argument("--dataset", type=str, default="jinan")
@@ -31,9 +33,9 @@ def main(in_args):
         count = 3600
         road_net = "3_4"
         traffic_file_list = [
-            "anon_3_4_jinan_real.json",
-            "anon_3_4_jinan_real_2000.json",
-            "anon_3_4_jinan_real_2500.json",
+            "anon_3_4_jinan_real.json",  # jinan 1
+            "anon_3_4_jinan_real_2000.json",  # jinan 2
+            "anon_3_4_jinan_real_2500.json",  # jinan 3
             "anon_3_4_jinan_synthetic_24000_60min.json",
             "anon_3_4_jinan_synthetic_24h_6000.json",
         ]
@@ -42,8 +44,8 @@ def main(in_args):
         count = 3600
         road_net = "4_4"
         traffic_file_list = [
-            "anon_4_4_hangzhou_real.json",
-            "anon_4_4_hangzhou_real_5816.json",
+            "anon_4_4_hangzhou_real.json",  # hangzhou 1
+            "anon_4_4_hangzhou_real_5816.json",  # hangzhou 2
             "anon_4_4_hangzhou_synthetic_24000_60min.json",
         ]
         template = "Hangzhou"
@@ -80,13 +82,14 @@ def main(in_args):
     print("num_intersections:", num_intersections)
     print(in_args.traffic_file)
 
-    log_dir = f"./r1_logs/{in_args.gpt_version}/" + time.strftime(
+    log_dir = f"./r1_logs/{in_args.agent}/{in_args.gpt_version}/" + time.strftime(
         "%m%d_%H%M%S", time.localtime(time.time())
     )
 
     dic_agent_conf_extra = {
         "GPT_VERSION": in_args.gpt_version,
         "LOG_DIR": log_dir,
+        "AGENT_TYPE": in_args.agent,
     }
 
     dic_traffic_env_conf_extra = {

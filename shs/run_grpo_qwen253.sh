@@ -6,7 +6,7 @@ runs["jinan"]="anon_3_4_jinan_real.json anon_3_4_jinan_real_2000.json anon_3_4_j
 runs["hangzhou"]="anon_4_4_hangzhou_real.json anon_4_4_hangzhou_real_5816.json"
 
 # 创建一个目录来存放日志文件
-LOG_DIR="run_logs/grpo_qwen253"
+LOG_DIR="run_logs/rule_based_llm/$(date +%Y%m%d_%H%M%S)"
 mkdir -p $LOG_DIR
 
 # 遍历所有组合并执行
@@ -21,9 +21,10 @@ for dataset in "${!runs[@]}"; do
     # 执行命令，并将标准输出和错误输出都重定向到日志文件
     python run_trafficr1.py \
       --dataset "$dataset" \
+      --agent "LLMTrafficR1" \
       --traffic_file "$traffic_file" \
-      --gpt_version "grpo-qwen253" \
-      --proj_name "TSCS_GRPO_QWEN253" > "$log_file" 2>&1
+      --gpt_version "deepseek-r1" \
+      --proj_name "TSCS_DeepSeekR1" > "$log_file" 2>&1
       
     echo "Finished. See log for details."
     echo "---------------------------------"

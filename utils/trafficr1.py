@@ -13,7 +13,13 @@ from copy import deepcopy
 from .cityflow_env import CityFlowEnv
 from .pipeline import path_check, copy_cityflow_file, copy_conf_file
 
-from models.chatgpt_2 import TrafficR1_Agent
+_TRAFFIC_FILE_MAP = {
+    "anon_3_4_jinan_real.json": "jinan1",
+    "anon_3_4_jinan_real_2000.json": "jinan2",
+    "anon_3_4_jinan_real_2500.json": "jinan3",
+    "anon_4_4_hangzhou_real.json": "hangzhou1",
+    "anon_4_4_hangzhou_real_5816.json": "hangzhou2",
+}
 
 
 class TrafficR1:
@@ -24,7 +30,7 @@ class TrafficR1:
         self.dic_agent_conf = dic_agent_conf
         self.dic_traffic_env_conf = dic_traffic_env_conf
         self.dic_path = dic_path
-        self.agents: list[TrafficR1_Agent] = []
+        self.agents: list = []
         self.env = None
         self.roadnet = roadnet
         self.trafficflow = trafficflow
@@ -44,8 +50,12 @@ class TrafficR1:
         )
         self.env.reset()
 
+        agent_class = DIC_AGENTS[self.dic_agent_conf.get("AGENT_TYPE", "LLMTrafficR1")]
+        print(
+            "Using Agent type:", self.dic_agent_conf.get("AGENT_TYPE", "LLMTrafficR1")
+        )
         for i in range(self.dic_traffic_env_conf["NUM_INTERSECTIONS"]):
-            agent = TrafficR1_Agent(
+            agent = agent_class(
                 GPT_version=self.dic_agent_conf["GPT_VERSION"],
                 intersection=self.env.intersection_dict[
                     self.env.list_intersection[i].inter_name
@@ -201,6 +211,10 @@ class TrafficR1:
                 else 0
             ),
             "test_avg_travel_time_over": float(total_travel_time),
+            "test_traffic_flow_file": _TRAFFIC_FILE_MAP.get(
+                self.dic_traffic_env_conf["TRAFFIC_FILE"],
+                self.dic_traffic_env_conf["TRAFFIC_FILE"],
+            ),
         }
         logger.log(results)
         print(results)

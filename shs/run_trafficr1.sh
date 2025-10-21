@@ -6,7 +6,7 @@ runs["jinan"]="anon_3_4_jinan_real.json anon_3_4_jinan_real_2000.json anon_3_4_j
 runs["hangzhou"]="anon_4_4_hangzhou_real.json anon_4_4_hangzhou_real_5816.json"
 
 # 创建一个目录来存放日志文件
-LOG_DIR="run_logs/tr1_logs"
+LOG_DIR="run_logs/dsr1_logs/$(date +%Y%m%d_%H%M%S)"
 mkdir -p $LOG_DIR
 
 # 遍历所有组合并执行
@@ -22,8 +22,9 @@ for dataset in "${!runs[@]}"; do
     python run_trafficr1.py \
       --dataset "$dataset" \
       --traffic_file "$traffic_file" \
-      --gpt_version "tr1" \
-      --proj_name "TSCS_TR1" > "$log_file" 2>&1
+      --agent "LLMTrafficR1" \
+      --gpt_version "deepseek-r1" \
+      --proj_name "TSCS_DeepSeekR1" > "$log_file" 2>&1
       
     echo "Finished. See log for details."
     echo "---------------------------------"

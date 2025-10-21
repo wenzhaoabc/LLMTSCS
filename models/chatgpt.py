@@ -9,10 +9,10 @@ import io
 import pandas as pd
 import numpy as np
 
-url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+url = "https://api.openai.com/v1/chat/completions"
 headers = {
     "Content-Type": "application/json",
-    "Authorization": "sk-5e2e00ef602d41298fbb516cd799a5f2"
+    "Authorization": "sk-xxxxxx"  # Replace with your actual API key
 }
 
 four_phase_list = {'ETWT': 0, 'NTST': 1, 'ELWL': 2, 'NLSL': 3}
