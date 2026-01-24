@@ -72,9 +72,7 @@ incoming_lane_2_outgoing_road = {
 
 
 class TrafficR1_Agent:
-    def __init__(
-        self, GPT_version, intersection, inter_name, phase_num, log_dir, dataset
-    ):
+    def __init__(self, GPT_version, intersection, inter_name, phase_num, log_dir, dataset):
         # init road length
         roads = copy.deepcopy(intersection["roads"])
         self.inter_name = inter_name
@@ -92,8 +90,12 @@ class TrafficR1_Agent:
         # ]
         self.prompt = load_json("./prompts/prompt_traffic_r1.json")
 
-        self.state_action_prompt_file = f"{log_dir}/{dataset}-{self.inter_name}-{self.gpt_version}-{phase_num}_state_action_prompt_trafficr1.json"
-        self.error_file = f"{log_dir}/{dataset}-{self.inter_name}-{self.gpt_version}-{phase_num}_error_prompts_trafficr1.json"
+        self.state_action_prompt_file = (
+            f"{log_dir}/{dataset}-{self.inter_name}-{self.gpt_version}-{phase_num}_state_action_prompt_trafficr1.json"
+        )
+        self.error_file = (
+            f"{log_dir}/{dataset}-{self.inter_name}-{self.gpt_version}-{phase_num}_error_prompts_trafficr1.json"
+        )
         self.state_action_prompt = []
         self.errors = []
 
@@ -106,9 +108,7 @@ class TrafficR1_Agent:
             flow_num += state[road]["queue_len"] + sum(state[road]["cells"])
         if flow_num == 0:
             action_code = self.action2code("ETWT")
-            self.state_action_prompt.append(
-                {"state": state, "prompt": [], "action": "ETWT"}
-            )
+            self.state_action_prompt.append({"state": state, "prompt": [], "action": "ETWT"})
             dump_json(self.state_action_prompt, self.state_action_prompt_file)
             return action_code
 
@@ -143,17 +143,21 @@ class TrafficR1_Agent:
             except Exception as e:
                 if "llm_res" not in locals():
                     llm_res = "No response"
+                if isinstance(llm_res, str):
+                    continue
                 self.errors.append(
                     {
                         "error": str(e),
                         "prompt": prompt,
-                        "response": llm_res.model_dump(),
+                        "response": llm_res.model_dump() if not isinstance(llm_res, str) else "No response",
                     }
                 )
                 dump_json(self.errors, self.error_file)
                 # time.sleep(3)
 
-        messages.append({"role": "assistant", "content": llm_res.model_dump()})
+        messages.append(
+            {"role": "assistant", "content": llm_res.model_dump() if not isinstance(llm_res, str) else "No response"}
+        )
         action_code = self.action2code(signal_text)
         self.state_action_prompt.append(
             {
@@ -228,9 +232,7 @@ You can only choose one of the signals listed above: NTST, NLSL, ETWT, ELWL. You
 
 
 class Rule_Agent:
-    def __init__(
-        self, GPT_version, intersection, inter_name, phase_num, log_dir, dataset
-    ):
+    def __init__(self, GPT_version, intersection, inter_name, phase_num, log_dir, dataset):
         # init road length
         roads = copy.deepcopy(intersection["roads"])
         self.inter_name = inter_name
@@ -245,9 +247,7 @@ class Rule_Agent:
         self.last_action = "ETWT"
 
         self.state_action_prompt_file = f"{log_dir}/{dataset}-{self.inter_name}-rulebased-{phase_num}_state_action.json"
-        self.error_file = (
-            f"{log_dir}/{dataset}-{self.inter_name}-rulebased-{phase_num}_error.json"
-        )
+        self.error_file = f"{log_dir}/{dataset}-{self.inter_name}-rulebased-{phase_num}_error.json"
         self.state_action_prompt = []
         self.errors = []
 
@@ -260,27 +260,20 @@ class Rule_Agent:
             flow_num += state[road]["queue_len"] + sum(state[road]["cells"])
         if flow_num == 0:
             action_code = self.action2code("ETWT")
-            self.state_action_prompt.append(
-                {"state": state, "action_reason": "Zero flow", "action": "ETWT"}
-            )
+            self.state_action_prompt.append({"state": state, "action_reason": "Zero flow", "action": "ETWT"})
             dump_json(self.state_action_prompt, self.state_action_prompt_file)
             return action_code
 
         # 计算各个相位的车流量
         phase_flow = {phase: 0 for phase in self.phases}
         for phase in phase_flow:
-            phase_flow[phase] = (
-                state[phase[:2]]["cells"][0] + state[phase[2:]]["cells"][0]
-            )
+            phase_flow[phase] = state[phase[:2]]["cells"][0] + state[phase[2:]]["cells"][0]
 
         # 判断是否选择最大流量相位
         max_flow_phase = max(phase_flow, key=phase_flow.get)
         is_max_flow_phase = True
         for phase in phase_flow:
-            if (
-                phase != max_flow_phase
-                and phase_flow[max_flow_phase] > phase_flow[phase] * 2.5
-            ):
+            if phase != max_flow_phase and phase_flow[max_flow_phase] > phase_flow[phase] * 2.5:
                 is_max_flow_phase = False
                 break
         if is_max_flow_phase:
@@ -299,21 +292,11 @@ class Rule_Agent:
         phase_queue = {phase: 0.0 for phase in self.phases}
         phase_waiting_time = {phase: 0.0 for phase in self.phases}
         for phase in phase_queue:
-            phase_queue[phase] = (
-                state[phase[:2]]["queue_len"] + state[phase[2:]]["queue_len"]
-            )
-            phase_waiting_time[phase] = (
-                state[phase[:2]]["avg_wait_time"] + state[phase[2:]]["avg_wait_time"]
-            )
+            phase_queue[phase] = state[phase[:2]]["queue_len"] + state[phase[2:]]["queue_len"]
+            phase_waiting_time[phase] = state[phase[:2]]["avg_wait_time"] + state[phase[2:]]["avg_wait_time"]
 
-        sorted_queue_phase = sorted(
-            phase_queue, key=lambda x: phase_queue[x], reverse=True
-        )
-        max_queue_phases = [
-            f
-            for f in phase_queue
-            if phase_queue[f] == phase_queue[sorted_queue_phase[0]]
-        ]
+        sorted_queue_phase = sorted(phase_queue, key=lambda x: phase_queue[x], reverse=True)
+        max_queue_phases = [f for f in phase_queue if phase_queue[f] == phase_queue[sorted_queue_phase[0]]]
         if len(max_queue_phases) == 1:
             action_code = self.action2code(max_queue_phases[0])
             self.state_action_prompt.append(
@@ -333,9 +316,7 @@ class Rule_Agent:
             reverse=True,
         )
         max_waiting_time_phases = [
-            f
-            for f in phase_waiting_time
-            if phase_waiting_time[f] == phase_waiting_time[sorted_waiting_time_phase[0]]
+            f for f in phase_waiting_time if phase_waiting_time[f] == phase_waiting_time[sorted_waiting_time_phase[0]]
         ]
         # 默认选择第一个相位
         action_code = self.action2code(max_waiting_time_phases[0])

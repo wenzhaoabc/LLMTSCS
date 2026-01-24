@@ -215,6 +215,7 @@ class TrafficR1:
                 self.dic_traffic_env_conf["TRAFFIC_FILE"],
                 self.dic_traffic_env_conf["TRAFFIC_FILE"],
             ),
+            "test_my_metrics": self.env.get_final_metrics(),
         }
         logger.log(results)
         print(results)

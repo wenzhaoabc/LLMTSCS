@@ -132,7 +132,9 @@ def test(model_dir, data_dir, cnt_round, run_cnt, _dic_traffic_env_conf, logger)
             "test_avg_queue_len_over": np.mean(queue_length_episode) if len(queue_length_episode) > 0 else 0,
             "test_queuing_vehicle_num_over": np.sum(queue_length_episode) if len(queue_length_episode) > 0 else 0,
             "test_avg_waiting_time_over": np.mean(waiting_time_episode) if len(queue_length_episode) > 0 else 0,
-            "test_avg_travel_time_over": total_travel_time}
+            "test_avg_travel_time_over": total_travel_time,
+            "test_my_metrics": env.get_final_metrics()
+        }
 
         return over_results, state_action_log
 

@@ -29,14 +29,14 @@ class Intersection:
         self.dic_entering_approach_to_edge = {"W": "road_{0}_{1}_0".format(inter_id[0] - 1, inter_id[1])}
         self.dic_entering_approach_to_edge.update({"E": "road_{0}_{1}_2".format(inter_id[0] + 1, inter_id[1])})
         self.dic_entering_approach_to_edge.update({"N": "road_{0}_{1}_3".format(inter_id[0], inter_id[1] + 1)})
-        self.dic_entering_approach_to_edge.update({"S": "road_{0}_{1}_1".format(inter_id[0], inter_id[1] - 1)})  # 'S' = 'road_1_0_1'
+        self.dic_entering_approach_to_edge.update({"S": "road_{0}_{1}_1".format(inter_id[0], inter_id[1] - 1)})
         self.dic_exiting_approach_to_edge = {
             approach: "road_{0}_{1}_{2}".format(inter_id[0], inter_id[1], self.dic_approach_to_node[approach]) for
-            approach in self.list_approachs} # 'S' = 'road_1_1_1'
+            approach in self.list_approachs}
         self.list_phases = dic_traffic_env_conf["PHASE"]
 
         # generate all lanes
-        self.list_entering_lanes = [] # ['road_1_1_0_0', ...]
+        self.list_entering_lanes = []
         for (approach, lane_number) in zip(self.list_approachs, dic_traffic_env_conf["NUM_LANES"]):
             self.list_entering_lanes += [self.dic_entering_approach_to_edge[approach] + "_" + str(i) for i in
                                          range(lane_number)]
@@ -475,6 +475,103 @@ class Intersection:
                 reward += dic_reward_info[r] * dic_reward[r]
         return reward
 
+class MetricsTracker:
+    """
+    记录各类指标
+    包含平均等待时间，平均排队长度，平均行程时间等
+    急刹车次数，平均急刹车率等指标
+    排队均衡性等
+    """
+    def __init__(self, dic_traffic_env_conf, eng):
+        self.dic_traffic_env_conf = dic_traffic_env_conf
+        self.eng = eng
+        self.veh_waiting_time = {}
+        self.vehicles = []
+        self.waiting_time = 0.0
+
+        # --- 新增：吞吐量统计 ---
+        self.all_seen_vehicles = set()  # 记录仿真过程中出现过的所有车辆ID
+
+        # --- 新增：急刹相关变量 ---
+        self.last_vehicle_speeds = {}  # 记录上一帧车辆速度
+        self.emergency_braking_count = 0  # 急刹总次数
+        self.emergency_braking_vehicles = set()  # 发生过急刹的车辆集合
+        self.braking_threshold = 3.0  # 急刹阈值 (m/s^2)，通常取 4.5 或 3.0
+
+        # --- 新增：排队均衡性统计 ---
+        self.total_queue_std = 0.0
+        self.step_count = 0
+        self.total_avg_speed = 0.0
+
+    def update(self):
+        vehicles = self.eng.get_vehicles(include_waiting=True)
+        # 更新出现过的所有车辆集合
+        self.all_seen_vehicles.update(vehicles)
+        self.vehicles = list(set(self.vehicles) | set(vehicles))
+
+        lane_waiting_count = self.eng.get_lane_waiting_vehicle_count()
+        # interval is configurable in LLMTSCS
+        interval = self.dic_traffic_env_conf["INTERVAL"]
+        self.waiting_time += sum(lane_waiting_count.values()) * interval
+
+        # --- 新增：计算排队标准差 (反映拥堵是否均衡) ---
+        queues = list(lane_waiting_count.values())
+        if queues:
+            mean_q = sum(queues) / len(queues)
+            variance = sum((x - mean_q) ** 2 for x in queues) / len(queues)
+            std_q = np.sqrt(variance)
+            self.total_queue_std += std_q
+
+        self.step_count += 1
+
+        # --- 新增：计算急刹逻辑 ---
+        current_speeds = self.eng.get_vehicle_speed()
+
+        # --- 新增：累加平均速度 ---
+        if current_speeds:
+            avg_speed_step = sum(current_speeds.values()) / len(current_speeds)
+            self.total_avg_speed += avg_speed_step
+
+        for v_id, current_speed in current_speeds.items():
+            if v_id in self.last_vehicle_speeds:
+                prev_speed = self.last_vehicle_speeds[v_id]
+                # 计算加速度: (v_now - v_prev) / dt
+                acceleration = (current_speed - prev_speed) / interval
+
+                # 判定急刹 (加速度 < -阈值)
+                if acceleration < -self.braking_threshold:
+                    self.emergency_braking_count += 1
+                    self.emergency_braking_vehicles.add(v_id)
+
+        # 更新上一帧速度字典
+        self.last_vehicle_speeds = current_speeds
+
+    def get_metrics(self):
+        # 计算吞吐量：总共见过的车 - 当前还在跑的车 = 已经离开的车
+        current_running = self.eng.get_vehicle_count()
+        throughput = len(self.all_seen_vehicles) - current_running
+
+        return {
+            "total_waiting_time_sum": self.waiting_time,
+            "avg_waiting_time": self.waiting_time / len(self.vehicles) if len(self.vehicles) > 0 else 0.0,
+            "avg_queue_length": (
+                self.waiting_time / self.eng.get_current_time() if self.eng.get_current_time() > 0 else 0.0
+            ),
+            # --- 急刹指标 ---
+            "total_emergency_braking_count": float(self.emergency_braking_count),
+            "emergency_braking_rate": (
+                self.emergency_braking_count / len(self.vehicles) if len(self.vehicles) > 0 else 0.0
+            ),
+
+            "throughput": float(throughput),  # 吞吐量 (越高越好)
+            "avg_queue_std": (
+                (self.total_queue_std / self.step_count) if self.step_count > 0 else 0.0
+            ),  # 排队均衡性 (越低越好)
+            "avg_speed": (
+                (self.total_avg_speed / self.step_count) if self.step_count > 0 else 0.0
+            ),  # 平均车速 (越高越好)
+        }
+
 
 class CityFlowEnv:
 
@@ -527,6 +624,9 @@ class CityFlowEnv:
             json.dump(cityflow_config, json_file)
 
         self.eng = engine.Engine(os.path.join(self.path_to_work_directory, "cityflow.config"), thread_num=1)
+
+        # Initialize MetricsTracker
+        self.metric_tracker = MetricsTracker(self.dic_traffic_env_conf, self.eng)
 
         # get adjacency
         self.traffic_light_node_dict = self._adjacency_extraction()
@@ -746,6 +846,7 @@ class CityFlowEnv:
         # run one step
         for i in range(int(1/self.dic_traffic_env_conf["INTERVAL"])):
             self.eng.next_step()
+            self.metric_tracker.update()
 
             # update queuing vehicle info
             vehicle_ids = self.eng.get_vehicles(include_waiting=False)
@@ -799,6 +900,9 @@ class CityFlowEnv:
 
     def get_current_time(self):
         return self.eng.get_current_time()
+
+    def get_final_metrics(self):
+        return self.metric_tracker.get_metrics()
 
     def log(self, cur_time, before_action_feature, action):
 

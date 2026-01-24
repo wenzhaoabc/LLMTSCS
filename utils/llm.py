@@ -10,7 +10,7 @@ def create_chat_completion(
     **kwargs,
 ):
     client = OpenAI(
-        api_key="sk--",
+        api_key=os.environ.get("TRAFFICR1_API_KEY", ""),
         base_url=os.environ.get("TRAFFICR1_BASE_URL", "http://127.0.0.1:8000/v1"),
     )
     response = client.chat.completions.create(
