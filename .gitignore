@@ -16,7 +16,6 @@ logs_transfer/
 records_case_study/
 records_transfer/
 memory/
-# *.sh
 /*.txt
 *.pyc
 *.pkl
@@ -25,3 +24,6 @@ run_logs/
 r1_logs/
 CityFlow/
 *.env
+logs/
+__pycache__/
+
