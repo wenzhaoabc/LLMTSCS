@@ -2,6 +2,7 @@
 .vscode/
 .DS_Store/
 model/
+model_weights/
 models/__pycache__/
 GPT_logs/
 errors/
@@ -27,3 +28,4 @@ CityFlow/
 logs/
 __pycache__/
 
+data/

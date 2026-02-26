@@ -554,6 +554,7 @@ class MetricsTracker:
         return {
             "total_waiting_time_sum": self.waiting_time,
             "avg_waiting_time": self.waiting_time / len(self.vehicles) if len(self.vehicles) > 0 else 0.0,
+            "avg_travel_time": self.eng.get_average_travel_time(),
             "avg_queue_length": (
                 self.waiting_time / self.eng.get_current_time() if self.eng.get_current_time() > 0 else 0.0
             ),

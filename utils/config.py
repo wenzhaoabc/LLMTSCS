@@ -30,6 +30,7 @@ DIC_AGENTS = {
     "AdvancedColight": CoLightAgent,
     "AdvancedDQN": SimpleDQNAgentOne,
     "Attend": AttendLightAgent,
+    "AttendLight": AttendLightAgent,
     "ChatGPTTLCSWaitTimeForecast": ChatGPTTLCS_Wait_Time_Forecast,
     "ChatGPTTLCSCommonsense": ChatGPTTLCS_Commonsense,
     "LLMTrafficR1": TrafficR1_Agent,

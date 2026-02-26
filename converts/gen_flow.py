@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import random
 
-flow_ori = json.load(open("/home/wen/tr/datasets/hangzhou/hangzhou2.json", "r"))
+flow_ori = json.load(open("/home/wen/tr/LLMTSCS/data/Jinan/3_4/anon_3_4_jinan_real.json", "r"))
 
 all_routes = {}
 route2id = {}
@@ -41,7 +41,7 @@ for j in range(8000):  # vehicle number
 
 flow.sort(key=lambda x: x["startTime"])
 
-with open("/home/wen/tr/datasets/hangzhou/synthetic_8000_1h.json", "w", encoding="utf-8") as f:
+with open("/home/wen/tr/LLMTSCS/data/Jinan/3_4/synthetic_8000_1h.json", "w", encoding="utf-8") as f:
     f.write("[\n")
     for i, veh in enumerate(flow):
         json.dump(veh, f)

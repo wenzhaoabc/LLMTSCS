@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("-dataset", type=str, default="jinan")
     parser.add_argument("-traffic_file", type=str, default="anon_3_4_jinan_synthetic_24000_60min.json")
     parser.add_argument("-traffic_file_source", type=str, default="anon_3_4_jinan_real.json")
+    parser.add_argument("-duration", type=int, default=30)
 
     return parser.parse_args()
 
@@ -87,6 +88,9 @@ def main(in_args):
             "pressure": 0
         },
     }
+    
+    config.dic_traffic_env_conf['MIN_ACTION_TIME'] = in_args.duration
+    config.dic_traffic_env_conf['MEASURE_TIME'] = in_args.duration
 
     dic_base_agent_conf = config.DIC_BASE_AGENT_CONF
 
@@ -141,7 +145,7 @@ def main(in_args):
         }
     elif in_args.model == 'AttendLight':
         dic_agent_conf_extra = {
-            "MODEL_NAME": "Attend",
+            "MODEL_NAME": "AttendLight",
             "LIST_STATE_FEATURE": [
                 "num_in_seg_attend",
             ],
@@ -161,6 +165,22 @@ def main(in_args):
                 "cur_phase",
                 "traffic_movement_pressure_queue_efficient",
                 "lane_enter_running_part",
+            ],
+        }
+    elif in_args.model == "EfficientPressLight":
+        dic_agent_conf_extra = {
+            "MODEL_NAME": "EfficientPressLight",
+            "LIST_STATE_FEATURE": [
+                "cur_phase",
+                "traffic_movement_pressure_queue_efficient",
+            ],
+        }
+    elif in_args.model == "EfficientMPLight":
+        dic_agent_conf_extra = {
+            "MODEL_NAME": "EfficientMPLight",
+            "LIST_STATE_FEATURE": [
+                "cur_phase",
+                "traffic_movement_pressure_queue_efficient",
             ],
         }
     else:
